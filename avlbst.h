@@ -137,8 +137,8 @@ protected:
     virtual void nodeSwap( AVLNode<Key,Value>* n1, AVLNode<Key,Value>* n2);
 
     // Add helper functions here
-    int balanceFactor(AVLNode<Key, Value>* node);
-    int getHeight(AVLNode<Key,Value>*ptr) const;   
+    int8_t balanceFactor(AVLNode<Key, Value>* node);
+    int8_t getHeight(AVLNode<Key,Value>*ptr) const;   
     void insert_fix(AVLNode<Key, Value>* p,AVLNode<Key, Value>* n); 
 
     void rotateRight(AVLNode<Key,Value>* p);   
@@ -150,12 +150,12 @@ protected:
  * overwrite the current value with the updated value.
  */
 template<class Key, class Value>
-int AVLTree<Key, Value>::balanceFactor(AVLNode<Key, Value>* node)
+int8_t AVLTree<Key, Value>::balanceFactor(AVLNode<Key, Value>* node)
 {
     if(node == nullptr)
         return 0;
-    int left = getHeight(node->getLeft());
-    int right = getHeight(node->getRight());
+    int8_t left = getHeight(node->getLeft());
+    int8_t right = getHeight(node->getRight());
     // if(node->getLeft() == nullptr)
     //     left = -1;
     // if(node->getRight() == nullptr)
@@ -164,12 +164,12 @@ int AVLTree<Key, Value>::balanceFactor(AVLNode<Key, Value>* node)
 }
 
 template<class Key, class Value>
-int AVLTree<Key, Value>::getHeight(AVLNode<Key,Value>*ptr) const
+int8_t AVLTree<Key, Value>::getHeight(AVLNode<Key,Value>*ptr) const
 {
     if(ptr == nullptr)
         return 0;
-    int left = getHeight(ptr->getLeft());
-    int right = getHeight(ptr->getRight());
+    int8_t left = getHeight(ptr->getLeft());
+    int8_t right = getHeight(ptr->getRight());
     if(left > right)
         return left + 1;
     else
@@ -300,12 +300,11 @@ template<class Key, class Value>
 void AVLTree<Key, Value>::insert (const std::pair<const Key, Value> &new_item)
 {
     BinarySearchTree<Key, Value>::insert(new_item);
+    AVLNode<Key, Value>* node = static_cast<AVLNode<Key, Value>*>(BinarySearchTree<Key, Value>::internalFind(new_item.first));
+    node->setBalance(0);
     if(!BinarySearchTree<Key, Value>::isBalanced())
     {
-        AVLNode<Key, Value>* node = static_cast<AVLNode<Key, Value>*>(BinarySearchTree<Key, Value>::internalFind(new_item.first));
-        
-        node->setBalance(0);
-        int balance = balanceFactor(node->getParent());
+        int8_t balance = balanceFactor(node->getParent());
         
         node->getParent()->updateBalance(balance);
         if(balance !=0){

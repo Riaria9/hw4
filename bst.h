@@ -670,8 +670,10 @@ void BinarySearchTree<Key, Value>::deleteNodes(Node<Key, Value>* ptr)
     //delete all the node in post traversal recursion
     if(ptr == nullptr)
         return;
-    BinarySearchTree<Key, Value>::deleteNodes( ptr->getLeft());
-    BinarySearchTree<Key, Value>::deleteNodes( ptr->getRight());
+    Node<Key, Value>* left = ptr->getLeft();
+    Node<Key, Value>* right = ptr->getRight();
+    BinarySearchTree<Key, Value>::deleteNodes(left);
+    BinarySearchTree<Key, Value>::deleteNodes(right);
     delete ptr;
 }
 

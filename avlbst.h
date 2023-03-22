@@ -137,18 +137,183 @@ protected:
     virtual void nodeSwap( AVLNode<Key,Value>* n1, AVLNode<Key,Value>* n2);
 
     // Add helper functions here
+    int balanceFactor(AVLNode<Key, Value>* node);
+    int getHeight(AVLNode<Key,Value>*ptr) const;   
+    void insert_fix(AVLNode<Key, Value>* p,AVLNode<Key, Value>* n); 
 
-
+    void rotateRight(AVLNode<Key,Value>* p);   
+    void rotateLeft(AVLNode<Key,Value>* p);                                                                                             
 };
 
 /*
- * Recall: If key is already in the tree, you should 
+ * Recall: If key is already in the tree, you should updat
  * overwrite the current value with the updated value.
  */
 template<class Key, class Value>
+int AVLTree<Key, Value>::balanceFactor(AVLNode<Key, Value>* node)
+{
+    if(node == nullptr)
+        return 0;
+    int left = getHeight(node->getLeft());
+    int right = getHeight(node->getRight());
+    // if(node->getLeft() == nullptr)
+    //     left = -1;
+    // if(node->getRight() == nullptr)
+    //     right = -1;
+    return right-left;
+}
+
+template<class Key, class Value>
+int AVLTree<Key, Value>::getHeight(AVLNode<Key,Value>*ptr) const
+{
+    if(ptr == nullptr)
+        return 0;
+    int left = getHeight(ptr->getLeft());
+    int right = getHeight(ptr->getRight());
+    if(left > right)
+        return left + 1;
+    else
+        return right + 1;
+}
+
+template<class Key, class Value>
+void AVLTree<Key, Value>::rotateLeft(AVLNode<Key,Value>* x){
+    AVLNode<Key,Value>* y = x->getRight();
+    y->setParent(x->getParent());
+    x->setRight(y->getLeft());
+    x->setParent(y);
+    y->setLeft(x);
+}
+
+template<class Key, class Value>
+void AVLTree<Key, Value>::rotateRight(AVLNode<Key,Value>* z){
+    AVLNode<Key,Value>* y = z->getLeft();
+    y->setParent(z->getParent());
+    z->setLeft(y->getRight());
+    z->setParent(y);
+    y->setRight(z);
+
+}
+
+template<class Key, class Value>
+void AVLTree<Key, Value>::insert_fix(AVLNode<Key,Value>*p,AVLNode<Key,Value>*n)
+{
+    if(p == nullptr || p->getParent() == nullptr)
+        return;
+    AVLNode<Key,Value>* g = p->getParent();
+
+    //Assume p is left child of g
+    if(p->getParent()->getLeft() == p){
+        
+        g->updateBalance(-1);
+        //3 cases
+        if(balanceFactor(g)==0)
+            return;
+        else if(balanceFactor(g)==-1){
+            insert_fix(g, p);
+        }
+        else if(balanceFactor(g) == -2){
+            //zigzig
+            if(n == p->getLeft()){
+                rotateRight(g);
+                p->updateBalance(0);
+                g->updateBalance(0);
+                if(g == this->root_){
+                    this->root_ = p;
+                }
+            }
+            else{
+                rotateLeft(p);
+                rotateRight(g);
+                if(n->getBalance() == -1){
+                    p->updateBalance(0);
+                    g->updateBalance(1);
+                    n->updateBalance(0);
+                }
+                else if(n->getBalance() == 0){
+                    p->updateBalance(0);
+                    g->updateBalance(0);
+                    n->updateBalance(0);
+                }
+                else if(n->getBalance() == 1){
+                    p->updateBalance(-1);
+                    g->updateBalance(0);
+                    n->updateBalance(0);
+                }
+                if(g == this->root_){
+                    this->root_ = n;
+                }
+            }
+        }
+    }
+
+    //Assume p is right child of g
+   
+    else if(p->getParent()->getRight() == p){
+        g->updateBalance(1);
+        //3 cases
+        if(balanceFactor(g)==0)
+            return;
+        else if(balanceFactor(g)==1){
+            insert_fix(g, p);
+        }
+        else if(balanceFactor(g) == 2){
+            //zigzig
+            if(n == p->getRight()){
+                rotateLeft(g);
+                p->updateBalance(0);
+                g->updateBalance(0);
+                if(g == this->root_){
+                    this->root_ = p;
+                }
+            }
+            else{
+                rotateRight(p);
+                rotateLeft(g);
+                if(n->getBalance() == -1){
+                    p->updateBalance(0);
+                    g->updateBalance(1);
+                    n->updateBalance(0);
+                }
+                else if(n->getBalance() == 0){
+                    p->updateBalance(0);
+                    g->updateBalance(0);
+                    n->updateBalance(0);
+                }
+                else if(n->getBalance() == 1){
+                    p->updateBalance(-1);
+                    g->updateBalance(0);
+                    n->updateBalance(0);
+                }
+                
+                if(g == this->root_){
+                    this->root_ = n;
+                }
+            }
+        }
+    }
+}
+
+
+
+template<class Key, class Value>
 void AVLTree<Key, Value>::insert (const std::pair<const Key, Value> &new_item)
 {
-    // TODO
+    BinarySearchTree<Key, Value>::insert(new_item);
+    if(!BinarySearchTree<Key, Value>::isBalanced())
+    {
+        AVLNode<Key, Value>* node = static_cast<AVLNode<Key, Value>*>(BinarySearchTree<Key, Value>::internalFind(new_item.first));
+        
+        node->setBalance(0);
+        int balance = balanceFactor(node->getParent());
+        
+        node->getParent()->updateBalance(balance);
+        if(balance !=0){
+            insert_fix(node->getParent(),node);
+        }
+
+    }
+    
 }
 
 /*

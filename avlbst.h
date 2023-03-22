@@ -142,13 +142,53 @@ protected:
     void insert_fix(AVLNode<Key, Value>* p,AVLNode<Key, Value>* n); 
 
     void rotateRight(AVLNode<Key,Value>* p);   
-    void rotateLeft(AVLNode<Key,Value>* p);                                                                                             
+    void rotateLeft(AVLNode<Key,Value>* p);
+    void avlInsert(const std::pair<const Key, Value> &keyValuePair);                                                                                    
 };
 
 /*
  * Recall: If key is already in the tree, you should updat
  * overwrite the current value with the updated value.
  */
+template<class Key, class Value>
+void AVLTree<Key, Value>::avlInsert(const std::pair<const Key, Value> &keyValuePair)
+{
+    
+    AVLNode<Key, Value> *newNode = new AVLNode<Key, Value>(keyValuePair.first, keyValuePair.second,nullptr);
+    if (this->root_ == nullptr){
+        this->root_ = newNode;
+    }
+    else{
+        Node<Key, Value> * curr = this->root_;
+        while(curr != nullptr){
+            if (keyValuePair.first < curr->getKey()){
+                if (curr->getLeft() == nullptr){
+                    curr->setLeft(newNode);
+                    newNode->setParent(curr);
+                    break;
+                }
+                else{
+                    curr = curr->getLeft();
+                }
+            }
+            else if (keyValuePair.first > curr->getKey()){
+                if (curr->getRight() == nullptr){
+                    curr->setRight(newNode);
+                    newNode->setParent(curr);
+                    break;
+                }
+                else{
+                    curr = curr->getRight();
+                }
+            }
+            else{
+                curr->setValue(keyValuePair.second);
+                break;
+            }
+        }
+    }
+}
+
 template<class Key, class Value>
 int8_t AVLTree<Key, Value>::balanceFactor(AVLNode<Key, Value>* node)
 {
@@ -299,7 +339,7 @@ void AVLTree<Key, Value>::insert_fix(AVLNode<Key,Value>*p,AVLNode<Key,Value>*n)
 template<class Key, class Value>
 void AVLTree<Key, Value>::insert (const std::pair<const Key, Value> &new_item)
 {
-    BinarySearchTree<Key, Value>::insert(new_item);
+    AVLTree<Key, Value>::avlInsert(new_item);
     AVLNode<Key, Value>* node = static_cast<AVLNode<Key, Value>*>(BinarySearchTree<Key, Value>::internalFind(new_item.first));
     node->setBalance(0);
     if(!BinarySearchTree<Key, Value>::isBalanced())

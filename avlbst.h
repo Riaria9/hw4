@@ -219,20 +219,53 @@ int8_t AVLTree<Key, Value>::getHeight(AVLNode<Key,Value>*ptr) const
 template<class Key, class Value>
 void AVLTree<Key, Value>::rotateLeft(AVLNode<Key,Value>* x){
     AVLNode<Key,Value>* y = x->getRight();
-    y->setParent(x->getParent());
-    x->setRight(y->getLeft());
-    x->setParent(y);
+    AVLNode<Key,Value>* z = y->getLeft();
+    AVLNode<Key,Value>* p = x->getParent();
+    if(p == nullptr){
+        this->root_ = y;
+        y->setParent(nullptr);
+    }
+    else{
+        if(p->getLeft() == x){
+            p->setLeft(y);
+            y->setParent(p);
+        }
+        else{
+            p->setRight(y);
+            y->setParent(p);
+        }
+    }
     y->setLeft(x);
+    x->setParent(y);
+    x->setRight(z);
+    if(z != nullptr)
+        z->setParent(x);
 }
 
 template<class Key, class Value>
 void AVLTree<Key, Value>::rotateRight(AVLNode<Key,Value>* z){
     AVLNode<Key,Value>* y = z->getLeft();
-    y->setParent(z->getParent());
-    z->setLeft(y->getRight());
-    z->setParent(y);
+    AVLNode<Key,Value>* x = y->getRight();
+    AVLNode<Key,Value>* p = z->getParent();
+    if(p == nullptr){
+        this->root_ = y;
+        y->setParent(nullptr);
+    }
+    else{
+        if(p->getLeft() == z){
+            p->setLeft(y);
+            y->setParent(p);
+        }
+        else{
+            p->setRight(y);
+            y->setParent(p);
+        }
+    }
     y->setRight(z);
-
+    z->setParent(y);
+    z->setLeft(x);
+    if(x != nullptr)
+        x->setParent(z);
 }
 
 template<class Key, class Value>
@@ -262,6 +295,7 @@ void AVLTree<Key, Value>::insert_fix(AVLNode<Key,Value>*p,AVLNode<Key,Value>*n)
                     this->root_ = p;
                 }
             }
+            //zigzag
             else{
                 rotateLeft(p);
                 rotateRight(g);

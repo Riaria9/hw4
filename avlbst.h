@@ -140,11 +140,15 @@ protected:
     int8_t balanceFactor(AVLNode<Key, Value>* node);
     int8_t getHeight(AVLNode<Key,Value>*ptr) const;   
     void insert_fix(AVLNode<Key, Value>* p,AVLNode<Key, Value>* n); 
-    void removeFix(AVLNode<Key,Value>*p,int diff);
+    void removeFix(AVLNode<Key,Value>*p,int8_t diff);
     void rotateRight(AVLNode<Key,Value>* p);   
     void rotateLeft(AVLNode<Key,Value>* p);
-    void avlInsert(const std::pair<const Key, Value> &keyValuePair);                                                                                    
+    void avlInsert(const std::pair<const Key, Value> &keyValuePair);   
+
+    void avlRemove(const Key& key);                                                                                 
 };
+
+
 
 /*
  * Recall: If key is already in the tree, you should updat
@@ -293,9 +297,21 @@ void AVLTree<Key, Value>::insert (const std::pair<const Key, Value> &new_item)
         node = static_cast<AVLNode<Key, Value>*>(BinarySearchTree<Key, Value>::internalFind(new_item.first));
         node->setBalance(0);
                 
+        // if node is parent's left child
+        // parent updatebalance(-1)
+        // else
+        // updatebalance(1)
+
+        // if parent balance not 0
+        // insert fix
+        AVLNode<Key, Value>* p = node->getParent();
         int balance = node->getParent()->getBalance();
         if(balance == 0){
-            node->getParent()->setBalance(balanceFactor(node->getParent()));
+            //node->getParent()->setBalance(balanceFactor(node->getParent()));
+            if(node == p->getLeft())
+                p->setBalance(-1);
+            if(node == p->getRight())
+                p->setBalance(1);
             insert_fix(node->getParent(),node);
         }
         else if(balance == -1)
@@ -413,7 +429,84 @@ void AVLTree<Key, Value>::insert_fix(AVLNode<Key,Value>*p,AVLNode<Key,Value>*n)
     }
 }
 
-
+// template<typename Key, typename Value>
+// void AVLTree<Key, Value>::avlRemove(const Key& key)
+// {    
+//     AVLNode<Key, Value> *curr = static_cast<AVLNode<Key, Value>*>(BinarySearchTree<Key, Value>::internalFind(key));
+//     if(curr == nullptr) return;
+//     else{
+//         //if it has 2 children, swap with its predecessor
+//         if(curr->getLeft()!=nullptr && curr->getRight()!=nullptr){
+//             AVLNode<Key, Value> *pred = static_cast<AVLNode<Key, Value>*>(BinarySearchTree<Key, Value>::predecessor(curr));
+//             //since right most child, could possibly only have left child
+//             if(pred->getLeft() == nullptr){//if no more left child
+//                 nodeSwap(pred,curr);
+//                 if(curr->getParent()->getLeft()==curr)curr->getParent()->setLeft(nullptr);
+//                 else if(curr->getParent()->getRight()==curr)curr->getParent()->setRight(nullptr);
+//                 delete curr;
+//             }
+    
+//             else{//if left child exists on the predecessor
+//                 nodeSwap(pred,curr);
+//                 if(curr->getParent()->getLeft()==curr){
+//                     if(curr->getLeft()!=nullptr){//updating pointer
+//                         curr->getParent()->setLeft(curr->getLeft());
+//                         curr->getLeft()->setParent(curr->getParent());
+//                     } 
+//                     else curr->getParent()->setLeft(nullptr);
+                    
+//                 }
+//                 else if(curr->getParent()->getRight()==curr){
+//                     if(curr->getLeft()!=nullptr)//updating pointer
+//                     {
+//                         curr->getParent()->setRight(curr->getLeft());
+//                         curr->getLeft()->setParent(curr->getParent());
+//                     } 
+//                     else {//updating
+//                         curr->getParent()->setRight(nullptr);
+                        
+//                     }
+//                 }
+//                 delete curr;
+//             }
+//         }
+//         //following 2 cases are if it has 1 child
+//         else if(curr->getLeft()!=nullptr){//child on current's left
+//             curr->getLeft()->setParent(curr->getParent());
+//             if(curr->getParent()==nullptr){
+//                 this->root_ = curr->getLeft();
+//             }
+//             else{
+//                 if(curr->getParent()->getRight()==curr) curr->getParent()->setRight(curr->getLeft());
+//             else if(curr->getParent()->getLeft()==curr) curr->getParent()->setLeft(curr->getLeft());
+//             }
+            
+//             delete curr;
+//         }
+//         else if(curr->getRight()!= nullptr){//child on current's right
+//             curr->getRight()->setParent(curr->getParent());
+//             if(curr->getParent()==nullptr){
+//                 this->root_ = curr->getRight();
+//             }
+//             else{
+//                 if(curr->getParent()->getRight()==curr) curr->getParent()->setRight(curr->getRight());
+//                 else if (curr->getParent()->getLeft()==curr) curr->getParent()->setLeft(curr->getRight());
+//             }
+//             delete curr;
+            
+//         }
+//         else{
+//             if(curr->getParent() == nullptr){
+//                 BinarySearchTree<Key,Value>::clear();
+//             }
+//             else{
+//                 if(curr->getParent()->getLeft()==curr) curr->getParent()->setLeft(nullptr);
+//                 else if(curr->getParent()->getRight()==curr) curr->getParent()->setRight(nullptr);
+//                 delete curr;
+//             }
+//         }
+//     }
+// }
 
 
 
@@ -426,36 +519,114 @@ template<class Key, class Value>
 void AVLTree<Key, Value>:: remove(const Key& key)
 {
     // TODO
-    int diff;
+    int8_t diff;
     //if empty tree
     if(this->root_ == nullptr)
         return;
-    //if key does not exist
-    AVLNode<Key, Value>* n = static_cast<AVLNode<Key, Value>*>(BinarySearchTree<Key, Value>::internalFind(key));
-    if(n==nullptr)
+    
+    
+    AVLNode<Key, Value>* curr = static_cast<AVLNode<Key, Value>*>(BinarySearchTree<Key, Value>::internalFind(key));
+    AVLNode<Key, Value>* pred = static_cast<AVLNode<Key, Value>*>(BinarySearchTree<Key, Value>::predecessor(curr));
+    if(curr==nullptr)
         return;
 
-    AVLNode<Key, Value>* p = n->getParent();
+    //if n has 2 children, swap with predecessor
+    if(curr->getLeft()!=nullptr && curr->getRight()!=nullptr)
+        nodeSwap(curr,pred);
+    AVLNode<Key, Value>* p = curr->getParent();
     if(p != nullptr)
     {
-        if(p->getLeft() == n){
+        if(p->getLeft() == curr){
             diff = 1;
         }
-        else if(p->getRight() == n){
+        else if(p->getRight() == curr){
             diff = -1;
         }
     }
-    BinarySearchTree<Key, Value>::remove(key);
+
+    
+    //now setting pointer
+    if(curr->getLeft()!=nullptr && curr->getRight()!=nullptr){
+            //Node<Key, Value> *pred = predecessor(curr);
+            //since right most child, could possibly only have left child
+            if(pred->getLeft() == nullptr){//if no more left child
+                // nodeSwap(pred,curr);
+                if(curr->getParent()->getLeft()==curr)curr->getParent()->setLeft(nullptr);
+                else if(curr->getParent()->getRight()==curr)curr->getParent()->setRight(nullptr);
+                // delete curr;
+            }
+            else{//if left child exists on the predecessor
+                // nodeSwap(pred,curr);
+                if(curr->getParent()->getLeft()==curr){
+                    if(curr->getLeft()!=nullptr){
+                        curr->getParent()->setLeft(curr->getLeft());
+                        curr->getLeft()->setParent(curr->getParent());
+                    } 
+                    else curr->getParent()->setLeft(nullptr);
+                    
+                }
+                else if(curr->getParent()->getRight()==curr){
+                    if(curr->getLeft()!=nullptr)
+                    {
+                        curr->getParent()->setRight(curr->getLeft());
+                        curr->getLeft()->setParent(curr->getParent());
+                    } 
+                    else {
+                        curr->getParent()->setRight(nullptr);
+                        
+                    }
+                }
+                delete curr;
+            }
+        }
+        //following 2 cases are if it has 1 child
+        else if(curr->getLeft()!=nullptr){//child on current's left
+            curr->getLeft()->setParent(curr->getParent());
+            if(curr->getParent()==nullptr){
+                this->root_ = curr->getLeft();
+            }
+            else{
+                if(curr->getParent()->getRight()==curr) curr->getParent()->setRight(curr->getLeft());
+            else if(curr->getParent()->getLeft()==curr) curr->getParent()->setLeft(curr->getLeft());
+            }
+            
+            delete curr;
+        }
+        else if(curr->getRight()!= nullptr){//child on current's right
+            curr->getRight()->setParent(curr->getParent());
+            if(curr->getParent()==nullptr){
+                this->root_ = curr->getRight();
+            }
+            else{
+                if(curr->getParent()->getRight()==curr) curr->getParent()->setRight(curr->getRight());
+                else if (curr->getParent()->getLeft()==curr) curr->getParent()->setLeft(curr->getRight());
+            }
+            delete curr;
+            
+        }
+        else{
+            if(curr->getParent() == nullptr){
+                BinarySearchTree<Key,Value>::clear();
+            }
+            else{
+                if(curr->getParent()->getLeft()==curr) curr->getParent()->setLeft(nullptr);
+                else if(curr->getParent()->getRight()==curr) curr->getParent()->setRight(nullptr);
+                delete curr;
+            }
+        }
+
     removeFix(p, diff);
+   
+    
 }
 
 template<class Key, class Value>
-void AVLTree<Key, Value>::removeFix(AVLNode<Key,Value>*n,int diff)
+void AVLTree<Key, Value>::removeFix(AVLNode<Key,Value>*n,int8_t diff)
 {
     if(n == nullptr)
         return;
     AVLNode<Key, Value>* p = n->getParent();
-    int nDiff;
+    int8_t nDiff;
     if(p != nullptr){
         if(p->getLeft() == n){
             nDiff = 1;
@@ -512,7 +683,7 @@ void AVLTree<Key, Value>::removeFix(AVLNode<Key,Value>*n,int diff)
         }
 
     }
-    else if(diff == 1)
+    else if(diff == 1)//right case
     {
         if(n->getBalance() + diff == 2){
             AVLNode<Key, Value>* c = n->getRight();

@@ -505,6 +505,7 @@ void BinarySearchTree<Key, Value>::insert(const std::pair<const Key, Value> &key
                 }
             }
             else{
+                delete newNode;
                 curr->setValue(keyValuePair.second);
                 break;
             }
